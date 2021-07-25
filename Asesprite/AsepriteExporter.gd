@@ -271,14 +271,7 @@ func image_to_raw_pixel_data(image : Image) -> PoolByteArray:
 	buffer.append_array(int_to_word(image.get_height()))
 	
 	#  BYTE[]    "Raw Cel" data compressed with ZLIB method
-	var image_buffer := PoolByteArray([])
-	for y in range(0, image.get_height()):
-		for x in range(0, image.get_width()):
-			var current_color = image.get_pixel(x, y)
-			image_buffer.append(current_color.r8)
-			image_buffer.append(current_color.g8)
-			image_buffer.append(current_color.b8)
-			image_buffer.append(current_color.a8)
+	var image_buffer := image.get_data()
 	
 	buffer.append_array(image_buffer)
 	
