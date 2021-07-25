@@ -20,6 +20,7 @@ func _create_file_test() -> void:
 	buffer.append_array(ase_ex._create_color_palette())
 	buffer.append_array(ase_ex._create_old_color_palette())
 	buffer.append_array(ase_ex._create_layer_chunk(0, layer_name))
+	buffer.append_array(ase_ex._creat_tag_chunk([["tag", 0, 0]]))
 	buffer.append_array(ase_ex._create_cel_chunk(0, image))
 	
 	var frame1 := ase_ex._create_frame(buffer.size(), 100, 5)

@@ -11,7 +11,8 @@ const CHUNK_HEADER_SIZE := 6
 const LAYER_CHUNK_MAGIC_NUMBER := 8196 #0x2004
 const CEL_CHUNK_MAGIC_NUMBER := 8197 #0x2005
 const COLOR_PALETTE_CHUNK_MAGIC_NUMBER := 8217 #0x2019
-const COLOR_PROFILE_CHUNK_MAGIC_NUMBER := 8199 #0x2007
+const COLOR_PROFILE_CHUNK_MAGIC_NUMBER := 8199 #0x2007S
+const TAGS_CHUNK_MAGIC_NUMBER := 0x2018
 const OLD_COLOR_PALETTE_CHUNK := 4 #0x0004
 
 func _get_header(
@@ -146,6 +147,50 @@ func _create_layer_chunk(
 	buffer.append_array(string_to_asa_string(layer_name))
 	
 	var header : PoolByteArray = _create_chunk_header(buffer.size(), LAYER_CHUNK_MAGIC_NUMBER)
+	header.append_array(buffer)
+	return header
+
+
+#each tag is an array [TageName:string, form_frame:int, to_frame]
+#Then ech tag should be append to an array making a 2d Array
+#example of 2 tags [["idle", 0, 3], ["run", 4, 6]]
+func _creat_tag_chunk(
+		tags : Array
+) -> PoolByteArray:
+	var buffer := PoolByteArray([])
+	
+	#WORD        Number of tags
+	buffer.append_array(int_to_word(tags.size()))
+	
+	#BYTE[8]     For future (set to zero)
+	for i in range(0, 8):
+		buffer.append(0)
+	
+	# For each tag
+	for tag in tags:
+		#  WORD      From frame
+		buffer.append_array(int_to_word(tag[1]))
+		
+		#  WORD      To frame
+		buffer.append_array(int_to_word(tag[2]))
+		
+		#  BYTE      Loop animation direction 0=Forward 1=Reverse 2=Ping-Pong
+		buffer.append(0)
+		
+		#  BYTE[8]   For future (set to zero)
+		for i in range(0, 8):
+			buffer.append(0)
+		
+		#  BYTE[3]   RGB values of the tag color
+		#  BYTE      Extra byte (zero)
+		for i in range(0, 4):
+			buffer.append(0)
+		
+		#  STRING    Tag name
+		buffer.append_array(string_to_asa_string(tag[0]))
+	
+	
+	var header : PoolByteArray = _create_chunk_header(buffer.size(), TAGS_CHUNK_MAGIC_NUMBER)
 	header.append_array(buffer)
 	return header
 
