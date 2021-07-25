@@ -154,7 +154,7 @@ func _create_layer_chunk(
 #each tag is an array [TageName:string, form_frame:int, to_frame]
 #Then ech tag should be append to an array making a 2d Array
 #example of 2 tags [["idle", 0, 3], ["run", 4, 6]]
-func _creat_tag_chunk(
+func _create_tag_chunk(
 		tags : Array
 ) -> PoolByteArray:
 	var buffer := PoolByteArray([])
@@ -208,7 +208,7 @@ func _create_cel_chunk(
 	#BYTE        Opacity level
 	buffer.append(255)
 	#WORD        Cel type: 0=RawCel 1=linked cel 2=Compressed Image
-	buffer.append_array(int_to_word(0))
+	buffer.append_array(int_to_word(2))
 	#BYTE[7]     For future (set to zero)
 	for i in range(0, 7):
 		buffer.append(0)
@@ -316,7 +316,7 @@ func image_to_raw_pixel_data(image : Image) -> PoolByteArray:
 	buffer.append_array(int_to_word(image.get_height()))
 	
 	#  BYTE[]    "Raw Cel" data compressed with ZLIB method
-	var image_buffer := image.get_data()
+	var image_buffer := image.get_data().compress(File.COMPRESSION_DEFLATE)
 	
 	buffer.append_array(image_buffer)
 	
