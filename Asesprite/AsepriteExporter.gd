@@ -199,12 +199,14 @@ func _create_cel_chunk(
 		image : Image
 	) -> PoolByteArray:
 	var buffer := PoolByteArray([])
+	
+	var used_rect := image.get_used_rect()
 	#WORD        Layer index
 	buffer.append_array(int_to_word(layer_index))
 	#SHORT       X position
-	buffer.append_array(int_to_word(0)) #there should be a int_to_short
+	buffer.append_array(int_to_word(used_rect.position.x)) #there should be a int_to_short
 	#SHORT       Y position
-	buffer.append_array(int_to_word(0))
+	buffer.append_array(int_to_word(used_rect.position.y))
 	#BYTE        Opacity level
 	buffer.append(255)
 	#WORD        Cel type: 0=RawCel 1=linked cel 2=Compressed Image
@@ -213,11 +215,13 @@ func _create_cel_chunk(
 	for i in range(0, 7):
 		buffer.append(0)
 	
-	#Image always Type 0 for now:
-	buffer.append_array(image_to_raw_pixel_data(image))  #Raw Cel
+	image = image.get_rect(used_rect)
+	buffer.append_array(image_to_data(image))
+	
 	
 	var header : PoolByteArray = _create_chunk_header(buffer.size(), CEL_CHUNK_MAGIC_NUMBER)
 	header.append_array(buffer)
+	
 	return header
 
 func _create_color_profile_chunk() -> PoolByteArray:
@@ -306,7 +310,7 @@ func string_to_asa_string(string : String) -> PoolByteArray:
 #takes a instace of Image_clase
 #makes a header with width and height
 #then it appends every pixel in rgba 32
-func image_to_raw_pixel_data(image : Image) -> PoolByteArray:
+func image_to_data(image : Image) -> PoolByteArray:
 	var buffer := PoolByteArray([])
 	image.lock()
 	
