@@ -9,5 +9,4 @@ __meta__ = {
 "_editor_description_": ""
 }
 file_name = "Icon"
-layer_name = "GodotRules"
 texture = ExtResource( 2 )

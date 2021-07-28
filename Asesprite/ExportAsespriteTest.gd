@@ -1,7 +1,7 @@
 extends Node2D
 
 export var file_name : String = "test1"
-export var layer_name : String = "layer 1"
+export var frames_amount := 7
 export var texture : Texture
 
 var ase_ex := AsepriteExporter.new()
@@ -13,24 +13,27 @@ func _ready() -> void:
 
 func _create_file_test() -> void:
 	var image : Image = texture.get_data()
-	var file = File.new()
-	var buffer := PoolByteArray([])
 	
-	buffer.append_array(ase_ex._create_color_profile_chunk())
-	buffer.append_array(ase_ex._create_color_palette())
-	buffer.append_array(ase_ex._create_old_color_palette())
-	buffer.append_array(ase_ex._create_layer_chunk(0, layer_name))
-	buffer.append_array(ase_ex._create_tag_chunk([["tag", 0, 0]]))
-	buffer.append_array(ase_ex._create_cel_chunk(0, image))
+	ase_ex.set_canvas_size_px(texture.get_width(), texture.get_height())
+	
+	ase_ex.define_layers(get_layers())
+	ase_ex.define_tags(get_tags())
 	
 	
-	var frame1 := ase_ex._create_frame(buffer.size(), 100, 6)
+	for f in range(0, frames_amount):
+		for l in range(0, get_layers().size()):
+			ase_ex.add_cel(image)
+		ase_ex.next_frame()
 	
-	frame1.append_array(buffer)
-	
-	var header := ase_ex._get_header(frame1.size(), 1, image.get_height(), image.get_width())
-	
-	file.open("res://FileTest/" + file_name + ".aseprite", File.WRITE)
-	file.store_buffer(header)
-	file.store_buffer(frame1)
-	file.close()
+	ase_ex.create_file("res://FileTest/new_test.aseprite")
+
+func get_tags() -> Array:
+	var tags = [
+		["test1", 0, 3],
+		["test2", 4, 5]
+	]
+	return tags
+
+func get_layers() -> Array:
+	var layers = ["layer1", "layer2", "layer3"]
+	return layers

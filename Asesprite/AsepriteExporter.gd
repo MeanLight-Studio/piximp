@@ -5,6 +5,80 @@ const HEADER_SIZE_IN_BYTES := 128
 const FRAME_HEADER_SIZE_IN_BYTES := 16
 const CHUNK_HEADER_SIZE := 6
 
+var frame_buffer := PoolByteArray([])
+var layers_buffer := PoolByteArray([])
+var tags_buffer := PoolByteArray([])
+var final_file_buffer := PoolByteArray([])
+
+var current_layer := 0
+var frame_count := 0
+var chunk_count := 0
+
+var canvas_width = 0
+var canvas_height = 0
+
+
+func set_canvas_size_px(width, height) -> void:
+	canvas_width = width
+	canvas_height = height
+
+func define_tags(tags : Array) -> void:
+	tags_buffer = _create_tag_chunk(tags)
+	chunk_count += 1
+
+func define_layers(layers : Array) -> void:
+	for layer in layers:
+		chunk_count += 1
+		layers_buffer.append_array(_create_layer_chunk(0, layer))
+
+func add_cel(image : Image, especific_index := -1) -> void:
+	var layer_index : int
+	
+	if especific_index < 0:
+		layer_index = current_layer
+	else:
+		layer_index = especific_index
+	
+	frame_buffer.append_array(_create_cel_chunk(layer_index, image))
+	chunk_count += 1
+	current_layer += 1
+
+func next_frame() -> void:
+	var buffer := PoolByteArray([])
+	
+	#first frame only things
+	if frame_count == 0:
+		buffer.append_array(_create_color_profile_chunk())
+		buffer.append_array(_create_color_palette())
+		buffer.append_array(_create_old_color_palette())
+		chunk_count += 3
+		
+		buffer.append_array(layers_buffer)
+		buffer.append_array(tags_buffer)
+		layers_buffer = []
+		tags_buffer = []
+	
+	buffer.append_array(frame_buffer)
+	
+	var header := _create_frame(buffer.size(), 100, chunk_count)
+	frame_count += 1
+	
+	final_file_buffer.append_array(header)
+	final_file_buffer.append_array(buffer)
+	
+	current_layer = 0
+	chunk_count = 0
+
+func create_file(path : String) -> void:
+	var file := File.new()
+	
+	file.open(path, File.WRITE)
+	
+	file.store_buffer(_get_header(final_file_buffer.size(), frame_count, canvas_width, canvas_height))
+	file.store_buffer(final_file_buffer)
+	
+	file.close()
+
 func _get_header(
 		file_size_in_bytes : int, frames : int, 
 		width_in_pixel : int, height_in_pixel
