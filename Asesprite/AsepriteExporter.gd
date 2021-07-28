@@ -1,19 +1,9 @@
 class_name AsepriteExporter
 extends Node
 
-const HEADER_MAGIC_NUMBER := 42464 #0xA5E0
 const HEADER_SIZE_IN_BYTES := 128
-
 const FRAME_HEADER_SIZE_IN_BYTES := 16
-const FRAME_MAGIC_NUMBER := 61946 #0xF1FA
-
 const CHUNK_HEADER_SIZE := 6
-const LAYER_CHUNK_MAGIC_NUMBER := 8196 #0x2004
-const CEL_CHUNK_MAGIC_NUMBER := 8197 #0x2005
-const COLOR_PALETTE_CHUNK_MAGIC_NUMBER := 8217 #0x2019
-const COLOR_PROFILE_CHUNK_MAGIC_NUMBER := 8199 #0x2007S
-const TAGS_CHUNK_MAGIC_NUMBER := 0x2018
-const OLD_COLOR_PALETTE_CHUNK := 4 #0x0004
 
 func _get_header(
 		file_size_in_bytes : int, frames : int, 
@@ -22,10 +12,10 @@ func _get_header(
 	var buffer := PoolByteArray([])
 	
 	#DWORD       File size
-	buffer.append_array(int_to_dword(file_size_in_bytes + HEADER_SIZE_IN_BYTES))
+	buffer.append_array(int_to_dword(file_size_in_bytes + 0xA5E0))
 	
 	#WORD        Magic number (0xA5E0)
-	buffer.append_array(int_to_word(HEADER_MAGIC_NUMBER))
+	buffer.append_array(int_to_word(0xA5E0))
 	
 	#WORD        Frames
 	buffer.append_array(int_to_word(frames))
@@ -89,7 +79,7 @@ func _create_frame(
 	buffer.append_array(int_to_dword(size_in_bytes + FRAME_HEADER_SIZE_IN_BYTES))
 	
 	#WORD        Magic number (always 0xF1FA)
-	buffer.append_array(int_to_word(FRAME_MAGIC_NUMBER))
+	buffer.append_array(int_to_word(0xF1FA))
 	
 	#WORD        Old field which specifies the number of "chunks"
 	buffer.append_array(int_to_word(number_of_chuks))        # TODO if number of chunks biger that 65535 store 65535 0xFFFF
@@ -146,7 +136,7 @@ func _create_layer_chunk(
 	#STRING      Layer name
 	buffer.append_array(string_to_asa_string(layer_name))
 	
-	var header : PoolByteArray = _create_chunk_header(buffer.size(), LAYER_CHUNK_MAGIC_NUMBER)
+	var header : PoolByteArray = _create_chunk_header(buffer.size(), 0x2004)
 	header.append_array(buffer)
 	return header
 
@@ -156,7 +146,7 @@ func _create_layer_chunk(
 #example of 2 tags [["idle", 0, 3], ["run", 4, 6]]
 func _create_tag_chunk(
 		tags : Array
-) -> PoolByteArray:
+	) -> PoolByteArray:
 	var buffer := PoolByteArray([])
 	
 	#WORD        Number of tags
@@ -190,7 +180,7 @@ func _create_tag_chunk(
 		buffer.append_array(string_to_asa_string(tag[0]))
 	
 	
-	var header : PoolByteArray = _create_chunk_header(buffer.size(), TAGS_CHUNK_MAGIC_NUMBER)
+	var header : PoolByteArray = _create_chunk_header(buffer.size(), 0x2018)
 	header.append_array(buffer)
 	return header
 
@@ -219,7 +209,7 @@ func _create_cel_chunk(
 	buffer.append_array(image_to_data(image))
 	
 	
-	var header : PoolByteArray = _create_chunk_header(buffer.size(), CEL_CHUNK_MAGIC_NUMBER)
+	var header : PoolByteArray = _create_chunk_header(buffer.size(), 0x2005)
 	header.append_array(buffer)
 	
 	return header
@@ -237,7 +227,7 @@ func _create_color_profile_chunk() -> PoolByteArray:
 	for i in range(0, 8):
 		buffer.append(0)
 	
-	var header : PoolByteArray = _create_chunk_header(buffer.size(), COLOR_PROFILE_CHUNK_MAGIC_NUMBER)
+	var header : PoolByteArray = _create_chunk_header(buffer.size(), 0x2007)
 	header.append_array(buffer)
 	return header
 
@@ -271,7 +261,7 @@ func _create_color_palette() -> PoolByteArray:
 	buffer.append(0)
 	buffer.append(255)
 	
-	var header : PoolByteArray = _create_chunk_header(buffer.size(), COLOR_PALETTE_CHUNK_MAGIC_NUMBER)
+	var header : PoolByteArray = _create_chunk_header(buffer.size(), 0x2019)
 	header.append_array(buffer)
 	return header
 
@@ -294,7 +284,7 @@ func _create_old_color_palette() -> PoolByteArray:
 	buffer.append(0)
 	buffer.append(0)
 	
-	var header : PoolByteArray = _create_chunk_header(buffer.size(), OLD_COLOR_PALETTE_CHUNK)
+	var header : PoolByteArray = _create_chunk_header(buffer.size(), 0x0004)
 	header.append_array(buffer)
 	return header
 
