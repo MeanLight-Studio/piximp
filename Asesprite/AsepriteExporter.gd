@@ -17,7 +17,6 @@ var chunk_count := 0
 var canvas_width = 0
 var canvas_height = 0
 
-
 func set_canvas_size_px(width, height) -> void:
 	canvas_width = width
 	canvas_height = height
@@ -393,50 +392,17 @@ func image_to_data(image : Image) -> PoolByteArray:
 #returns a poolVectorArray of 2 bytes with little-endian from a int
 func int_to_word(number :int = 0) -> PoolByteArray:
 	var word := PoolByteArray([])
-	var number_in_bytes := decimal_to_binary(number, 2)
-	
-	word.append(binary_to_decimal(number_in_bytes.substr(8, -1)))
-	word.append(binary_to_decimal(number_in_bytes.substr(0, 8)))
-	
+	word.append(number)
+	word.append(number >> 8)
 	return word
 
 #returns a poolVectorArray of 4 bytes with little-endian from a int
 func int_to_dword(number :int = 0) -> PoolByteArray:
 	var dword := PoolByteArray([])
-	var number_in_bytes := decimal_to_binary(number, 4)
 	
-	dword.append(binary_to_decimal(number_in_bytes.substr(24, 8)))
-	dword.append(binary_to_decimal(number_in_bytes.substr(16, 8)))
-	dword.append(binary_to_decimal(number_in_bytes.substr(8, 8)))
-	dword.append(binary_to_decimal(number_in_bytes.substr(0, 8)))
+	dword.append(number)
+	dword.append(number >> 8)
+	dword.append(number >> 16)
+	dword.append(number >> 24)
 	
 	return dword
-
-#returns a string with with 0s and 1s representig a binary number with no signed bit
-func decimal_to_binary(number : int, byte_size : int = 1) -> String:
-	var binary_number := ""
-	var bit_count : int = byte_size * 8 -1
-	
-	while(bit_count >= 0):
-		var current_bit = number >> bit_count 
-		if current_bit & 1:
-			binary_number += "1"
-		else:
-			binary_number += "0"
-		bit_count -= 1
-	
-	return binary_number
-
-#takes a binary number(in string) and return a decimal number
-func binary_to_decimal(binary_number : String) -> int:
-	var decimal_number : int = 0
-	var exponet = 0
-	var binary_number_int := int(binary_number)
-	
-	while(binary_number_int != 0):
-		var current_bit : int = binary_number_int % 10
-		binary_number_int /= 10
-		decimal_number += (current_bit * pow(2, exponet))
-		exponet += 1
-	
-	return decimal_number
