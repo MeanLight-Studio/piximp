@@ -30,7 +30,7 @@ func define_layers(layers : Array) -> void:
 		chunk_count += 1
 		layers_buffer.append_array(_create_layer_chunk(0, layer))
 
-func add_cel(image : Image, especific_index := -1) -> void:
+func add_cel(image : Image, img_position := Vector2.ZERO especific_index := -1) -> void:
 	var layer_index : int
 	
 	if especific_index < 0:
@@ -38,7 +38,7 @@ func add_cel(image : Image, especific_index := -1) -> void:
 	else:
 		layer_index = especific_index
 	
-	frame_buffer.append_array(_create_cel_chunk(layer_index, image))
+	frame_buffer.append_array(_create_cel_chunk(layer_index, image, img_position))
 	chunk_count += 1
 	current_layer += 1
 
@@ -259,7 +259,8 @@ func _create_tag_chunk(
 
 func _create_cel_chunk(
 		layer_index : int,
-		image : Image
+		image : Image,
+		img_position : Vector2
 	) -> PoolByteArray:
 	var buffer := PoolByteArray([])
 	
@@ -267,9 +268,9 @@ func _create_cel_chunk(
 	#WORD        Layer index
 	buffer.append_array(int_to_word(layer_index))
 	#SHORT       X position
-	buffer.append_array(int_to_word(used_rect.position.x)) #there should be a int_to_short
+	buffer.append_array(int_to_word(img_position.x)) #there should be a int_to_short
 	#SHORT       Y position
-	buffer.append_array(int_to_word(used_rect.position.y))
+	buffer.append_array(int_to_word(img_position.y))
 	#BYTE        Opacity level
 	buffer.append(255)
 	#WORD        Cel type: 0=RawCel 1=linked cel 2=Compressed Image
