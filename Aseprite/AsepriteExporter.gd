@@ -30,7 +30,7 @@ func define_layers(layers : Array) -> void:
 		chunk_count += 1
 		layers_buffer.append_array(_create_layer_chunk(0, layer))
 
-func add_cel(image : Image, img_position := Vector2.ZERO especific_index := -1) -> void:
+func add_cel(image : Image, img_position := Vector2.ZERO, especific_index := -1) -> void:
 	var layer_index : int
 	
 	if especific_index < 0:
