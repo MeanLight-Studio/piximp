@@ -17,6 +17,8 @@ var chunk_count := 0
 var canvas_width = 0
 var canvas_height = 0
 
+var frame_duration_ms := 100.0
+
 func set_canvas_size_px(width, height) -> void:
 	canvas_width = width
 	canvas_height = height
@@ -59,7 +61,7 @@ func next_frame() -> void:
 	
 	buffer.append_array(frame_buffer)
 	
-	var header := _create_frame(buffer.size(), 100, chunk_count)
+	var header := _create_frame(buffer.size(), frame_duration_ms, chunk_count)
 	frame_count += 1
 	
 	final_file_buffer.append_array(header)
