@@ -65,6 +65,7 @@ func next_frame() -> void:
 	final_file_buffer.append_array(header)
 	final_file_buffer.append_array(buffer)
 	
+	frame_buffer = []
 	current_layer = 0
 	chunk_count = 0
 
