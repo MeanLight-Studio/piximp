@@ -46,7 +46,7 @@ func add_layer(layer_name : String, flags : int = Flags.FLAGS_VISIBLE | Flags.FL
 	chunk_count += 1
 	layers_buffer.append_array(_create_layer_chunk(0, layer_name, flags, opacity))
 
-func add_cel(image : Image, img_position := Vector2.ZERO, especific_index := -1) -> void:
+func add_cel(image : Image, img_position := Vector2.ZERO, especific_index := -1, crop_used_rect := false) -> void:
 	var layer_index : int
 	
 	if especific_index < 0:
@@ -54,7 +54,7 @@ func add_cel(image : Image, img_position := Vector2.ZERO, especific_index := -1)
 	else:
 		layer_index = especific_index
 	
-	frame_buffer.append_array(_create_cel_chunk(layer_index, image, img_position))
+	frame_buffer.append_array(_create_cel_chunk(layer_index, image, img_position,crop_used_rect))
 	chunk_count += 1
 	current_layer += 1
 
@@ -277,11 +277,12 @@ func _create_tag_chunk(
 func _create_cel_chunk(
 		layer_index : int,
 		image : Image,
-		img_position : Vector2
+		img_position : Vector2,
+		crop_used_rect : bool
 	) -> PoolByteArray:
 	var buffer := PoolByteArray([])
 	
-	var used_rect := image.get_used_rect()
+	
 	#WORD        Layer index
 	buffer.append_array(int_to_word(layer_index))
 	#SHORT       X position
@@ -296,7 +297,10 @@ func _create_cel_chunk(
 	for i in range(0, 7):
 		buffer.append(0)
 	
-	image = image.get_rect(used_rect)
+	if crop_used_rect:
+		var used_rect := image.get_used_rect()
+		image = image.get_rect(used_rect)
+	
 	buffer.append_array(image_to_data(image))
 	
 	
