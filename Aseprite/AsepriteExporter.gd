@@ -185,13 +185,13 @@ func _create_chunk_header(
 	return buffer
 
 func _create_layer_chunk(
-		layer_level : int, layer_name : String
+		layer_level : int, layer_name : String, flags : int = 3, opacity : int = 255, type : int = 0
 	) -> PoolByteArray:
 	var buffer := PoolByteArray([])
 	#WORD        Flags:1=visible 2=editable 4 =lock movement 8=background 16=linked cels 32=collapsed 64=reference layer
 	buffer.append_array(int_to_word(3)) # editable and visible
 	#WORD        Layer type:0=Normal 1=Group
-	buffer.append_array(int_to_word(0)) #no groups option for now
+	buffer.append_array(int_to_word(type)) #no groups option for now
 	
 	#WORD        Layer child level
 	buffer.append_array(int_to_word(layer_level))
@@ -379,18 +379,21 @@ func string_to_asa_string(string : String) -> PoolByteArray:
 #then it appends every pixel in rgba 32
 func image_to_data(image : Image) -> PoolByteArray:
 	var buffer := PoolByteArray([])
-	image.lock()
-	
-	#  WORD      Width in pixels
-	buffer.append_array(int_to_word(image.get_width()))
-	#  WORD      Height in pixels
-	buffer.append_array(int_to_word(image.get_height()))
-	
-	#  BYTE[]    "Raw Cel" data compressed with ZLIB method
-	var image_buffer := image.get_data().compress(File.COMPRESSION_DEFLATE)
-	
-	buffer.append_array(image_buffer)
-	
+	if image is Image:
+		image.lock()
+		
+		#  WORD      Width in pixels
+		buffer.append_array(int_to_word(image.get_width()))
+		#  WORD      Height in pixels
+		buffer.append_array(int_to_word(image.get_height()))
+		
+		#  BYTE[]    "Raw Cel" data compressed with ZLIB method
+		var image_buffer := image.get_data().compress(File.COMPRESSION_DEFLATE)
+		
+		buffer.append_array(image_buffer)
+#	else:
+#		image=Image.new()
+#		image.create(canvas_width,canvas_height,false,Image.FORMAT_RGBA8)
 	return buffer
 
 #returns a poolVectorArray of 2 bytes with little-endian from a int
