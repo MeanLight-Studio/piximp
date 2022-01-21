@@ -24,8 +24,15 @@ func set_canvas_size_px(width, height) -> void:
 	canvas_width = width
 	canvas_height = height
 
+#each tag is an array [TageName:string, form_frame:int, to_frame]
+#Then ech tag should be append to an array making a 2d Array
+#example of 2 tags [["idle", 0, 3], ["run", 4, 6]]
 func define_tags(tags : Array) -> void:
-	tags_buffer = _create_tag_chunk(tags)
+	for k in tags:
+		add_tag(tags[0],tags[1],tags[2])
+
+func add_tag(tag_name : String, from_frame : int, to_frame : int) -> void:
+	tags_buffer.append_array(_create_tag_chunk(tag_name, from_frame, to_frame))
 	chunk_count += 1
 
 func define_layers(layers : Array) -> void:
@@ -218,43 +225,38 @@ func _create_layer_chunk(
 	return header
 
 
-#each tag is an array [TageName:string, form_frame:int, to_frame]
-#Then ech tag should be append to an array making a 2d Array
-#example of 2 tags [["idle", 0, 3], ["run", 4, 6]]
 func _create_tag_chunk(
-		tags : Array
+		tag_name : String, from_frame : int, to_frame : int
 	) -> PoolByteArray:
 	var buffer := PoolByteArray([])
 	
 	#WORD        Number of tags
-	buffer.append_array(int_to_word(tags.size()))
+	buffer.append_array(int_to_word(1))
 	
 	#BYTE[8]     For future (set to zero)
 	for i in range(0, 8):
 		buffer.append(0)
 	
-	# For each tag
-	for tag in tags:
-		#  WORD      From frame
-		buffer.append_array(int_to_word(tag[1]))
-		
-		#  WORD      To frame
-		buffer.append_array(int_to_word(tag[2]))
-		
-		#  BYTE      Loop animation direction 0=Forward 1=Reverse 2=Ping-Pong
+	#  WORD      From frame
+	buffer.append_array(int_to_word(from_frame))
+	
+	#  WORD      To frame
+	buffer.append_array(int_to_word(to_frame))
+	
+	#  BYTE      Loop animation direction 0=Forward 1=Reverse 2=Ping-Pong
+	buffer.append(0)
+	
+	#  BYTE[8]   For future (set to zero)
+	for i in range(0, 8):
 		buffer.append(0)
-		
-		#  BYTE[8]   For future (set to zero)
-		for i in range(0, 8):
-			buffer.append(0)
-		
-		#  BYTE[3]   RGB values of the tag color
-		#  BYTE      Extra byte (zero)
-		for i in range(0, 4):
-			buffer.append(0)
-		
-		#  STRING    Tag name
-		buffer.append_array(string_to_asa_string(tag[0]))
+	
+	#  BYTE[3]   RGB values of the tag color
+	#  BYTE      Extra byte (zero)
+	for i in range(0, 4):
+		buffer.append(0)
+	
+	#  STRING    Tag name
+	buffer.append_array(string_to_asa_string(tag_name))
 	
 	
 	var header : PoolByteArray = _create_chunk_header(buffer.size(), 0x2018)
