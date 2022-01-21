@@ -18,6 +18,7 @@ var canvas_width = 0
 var canvas_height = 0
 
 var frame_duration_ms := 100.0
+var crop_used_rect := false
 
 func set_canvas_size_px(width, height) -> void:
 	canvas_width = width
@@ -39,9 +40,9 @@ func add_cel(image : Image, img_position := Vector2.ZERO, especific_index := -1)
 		layer_index = current_layer
 	else:
 		layer_index = especific_index
-	
-	frame_buffer.append_array(_create_cel_chunk(layer_index, image, img_position))
-	chunk_count += 1
+	if image:
+		frame_buffer.append_array(_create_cel_chunk(layer_index, image, img_position))
+		chunk_count += 1
 	current_layer += 1
 
 func next_frame() -> void:
@@ -185,13 +186,13 @@ func _create_chunk_header(
 	return buffer
 
 func _create_layer_chunk(
-		layer_level : int, layer_name : String
+		layer_level : int, layer_name : String, flags : int = 3, opacity : int = 255, type : int = 0
 	) -> PoolByteArray:
 	var buffer := PoolByteArray([])
 	#WORD        Flags:1=visible 2=editable 4 =lock movement 8=background 16=linked cels 32=collapsed 64=reference layer
 	buffer.append_array(int_to_word(3)) # editable and visible
 	#WORD        Layer type:0=Normal 1=Group
-	buffer.append_array(int_to_word(0)) #no groups option for now
+	buffer.append_array(int_to_word(type)) #no groups option for now
 	
 	#WORD        Layer child level
 	buffer.append_array(int_to_word(layer_level))
@@ -282,7 +283,7 @@ func _create_cel_chunk(
 	for i in range(0, 7):
 		buffer.append(0)
 	
-	image = image.get_rect(used_rect)
+	
 	buffer.append_array(image_to_data(image))
 	
 	
@@ -379,18 +380,22 @@ func string_to_asa_string(string : String) -> PoolByteArray:
 #then it appends every pixel in rgba 32
 func image_to_data(image : Image) -> PoolByteArray:
 	var buffer := PoolByteArray([])
+	if !image is Image:
+		image=Image.new()
+		image.create(1,1,false,Image.FORMAT_RGBA8)
+		image.fill(Color(0,0,0,0))
+	if crop_used_rect:
+		var used_rect := image.get_used_rect()
+		image = image.get_rect(used_rect)
 	image.lock()
-	
 	#  WORD      Width in pixels
 	buffer.append_array(int_to_word(image.get_width()))
 	#  WORD      Height in pixels
 	buffer.append_array(int_to_word(image.get_height()))
-	
 	#  BYTE[]    "Raw Cel" data compressed with ZLIB method
 	var image_buffer := image.get_data().compress(File.COMPRESSION_DEFLATE)
 	
 	buffer.append_array(image_buffer)
-	
 	return buffer
 
 #returns a poolVectorArray of 2 bytes with little-endian from a int
