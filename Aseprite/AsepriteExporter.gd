@@ -20,6 +20,16 @@ var canvas_height = 0
 var frame_duration_ms := 100.0
 var crop_used_rect := false
 
+enum  Flags{
+	FLAGS_VISIBLE = 1
+	FLAG_EDITABLE = 2
+	FLAG_LOCK_MOVEMENT = 4
+	FLAG_BACKGROUND = 8
+	FLAG_LINKED_CELS = 16
+	FLAG_COLLAPSED = 32
+	FLAG_REFERENCE_LAYER = 64
+}
+
 func set_canvas_size_px(width, height) -> void:
 	canvas_width = width
 	canvas_height = height
@@ -40,16 +50,21 @@ func define_layers(layers : Array) -> void:
 		chunk_count += 1
 		layers_buffer.append_array(_create_layer_chunk(0, layer))
 
-func add_cel(image : Image, img_position := Vector2.ZERO, especific_index := -1) -> void:
+func add_layer(layer_name : String, flags : int = Flags.FLAGS_VISIBLE | Flags.FLAG_EDITABLE, opacity : int = 255):
+	chunk_count += 1
+	layers_buffer.append_array(_create_layer_chunk(0, layer_name, flags, opacity))
+
+func add_cel(image : Image, img_position := Vector2.ZERO, especific_index := -1, crop_used_rect := false) -> void:
 	var layer_index : int
 	
 	if especific_index < 0:
 		layer_index = current_layer
 	else:
 		layer_index = especific_index
-	if image:
-		frame_buffer.append_array(_create_cel_chunk(layer_index, image, img_position))
-		chunk_count += 1
+	
+	frame_buffer.append_array(_create_cel_chunk(layer_index, image, img_position,crop_used_rect))
+	chunk_count += 1
+
 	current_layer += 1
 
 func next_frame() -> void:
@@ -197,7 +212,7 @@ func _create_layer_chunk(
 	) -> PoolByteArray:
 	var buffer := PoolByteArray([])
 	#WORD        Flags:1=visible 2=editable 4 =lock movement 8=background 16=linked cels 32=collapsed 64=reference layer
-	buffer.append_array(int_to_word(3)) # editable and visible
+	buffer.append_array(int_to_word(flags)) # editable and visible
 	#WORD        Layer type:0=Normal 1=Group
 	buffer.append_array(int_to_word(type)) #no groups option for now
 	
@@ -212,7 +227,7 @@ func _create_layer_chunk(
 	buffer.append_array(int_to_word(0))
 	
 	#BYTE        Opacity
-	buffer.append(255)
+	buffer.append(opacity)
 	#BYTE[3]     For future (set to zero)
 	for i in range(0, 3):
 		buffer.append(0)
@@ -266,11 +281,12 @@ func _create_tag_chunk(
 func _create_cel_chunk(
 		layer_index : int,
 		image : Image,
-		img_position : Vector2
+		img_position : Vector2,
+		crop_used_rect : bool
 	) -> PoolByteArray:
 	var buffer := PoolByteArray([])
 	
-	var used_rect := image.get_used_rect()
+	
 	#WORD        Layer index
 	buffer.append_array(int_to_word(layer_index))
 	#SHORT       X position
@@ -285,6 +301,10 @@ func _create_cel_chunk(
 	for i in range(0, 7):
 		buffer.append(0)
 	
+	if crop_used_rect:
+		var used_rect := image.get_used_rect()
+		image = image.get_rect(used_rect)
+
 	
 	buffer.append_array(image_to_data(image))
 	
